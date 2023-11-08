@@ -3,7 +3,7 @@ Get-Process -Name scanapp* | Stop-Process -Force
 
 # Clear the contents of %appdata%\scan2
 Write-Host "Clearing contents of %appdata%\ScanApp2..."
-Remove-Item -Path "$env:C:\Users\Admin\AppData\Roaming\ScanApp2\*" -Recurse -Force
+Remove-Item -Path "$env:C:\Users\*\AppData\Roaming\ScanApp2\*" -Recurse -Force -Verbose
 
 # Restart the scanapp.exe process
 Write-Host "Restarting scanapp.exe..."
