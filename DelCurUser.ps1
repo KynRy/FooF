@@ -1,11 +1,15 @@
-# Get the current user's username
-$currentUser = whoami
+# Get the username of the currently logged-on user from the registry
+$currentUser = (Get-ItemProperty -Path "HKCU:\Volatile Environment\").UserName
 
-# Construct the path to the user's AppData folder
-$folderToDelete = "C:\Users\$currentUser\AppData\Roaming\ScanApp2"
+if ($currentUser) {
+    # Construct the path to the user's AppData folder
+    $folderToDelete = "C:\Users\$currentUser\AppData\Roaming\ScanApp2"
 
-if (Test-Path -Path $folderToDelete) {
-    Remove-Item -Path $folderToDelete -Recurse -Force -Verbose
+    if (Test-Path -Path $folderToDelete) {
+        Remove-Item -Path $folderToDelete -Recurse -Force -Verbose
+    } else {
+        Write-Host "The folder $folderToDelete does not exist for the current user."
+    }
 } else {
-    Write-Host "The folder $folderToDelete does not exist for the current user."
+    Write-Host "Unable to determine the current user."
 }
