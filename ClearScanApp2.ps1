@@ -31,7 +31,7 @@ if ($currentUser) {
 }
 
 # Define the path to the scanapp.exe executable
-$scanAppExePath = "C:\Path\to\scanapp.exe"
+$scanAppExePath = "C:\Program Files (x86)\ADOT_Scan\scanapp.exe"
 
 # Check if "scanapp.exe" process is running
 $processName = "scanapp.exe"
