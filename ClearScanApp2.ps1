@@ -37,17 +37,15 @@ $runningProcess = Get-Process -Name $processName -ErrorAction SilentlyContinue
 if ($runningProcess) {
     Write-Host "The $processName process is running."
 } else {
-    Write-Host "The $processName process is not running. Attempting again..."
-    
-    # Wait for 5 seconds (you can adjust this time as needed)
-    Start-Sleep -Seconds 5
-    
-    $runningProcess = Get-Process -Name $processName -ErrorAction SilentlyContinue
-    
-    if ($runningProcess) {
-        Write-Host "The $processName process is now running."
+    Write-Host "The $processName process is not running. Attempting to start it..."
+
+    $exePath = "C:\Program Files (x86)\ADOT_Scan\scanapp.exe"
+
+    if (Test-Path -Path $exePath) {
+        Start-Process -FilePath $exePath -NoNewWindow
+        Write-Host "Started the $processName process."
     } else {
-        Write-Host "The $processName process is still not running after the second attempt."
+        Write-Host "The file $exePath does not exist, unable to start $processName."
     }
 }
 
