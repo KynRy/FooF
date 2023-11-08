@@ -25,30 +25,41 @@ if ($currentUser) {
         Remove-Item -Path $folderToDelete -Recurse -Force -Verbose
     } else {
         Write-Host "The folder $folderToDelete does not exist for the current user."
-    }
 } else {
     Write-Host "Unable to determine the current user."
 }
+
+# Define the path to the scanapp.exe executable
+$scanAppExePath = "C:\Program Files (x86)\ADOT_Scan\scanapp.exe"
 
 # Check if "scanapp.exe" process is running
 $processName = "scanapp.exe"
 $runningProcess = Get-Process -Name $processName -ErrorAction SilentlyContinue
 
 if ($runningProcess) {
-    Write-Host "The $processName process is running."
+    Write-Host "The $processName process is already running."
 } else {
     Write-Host "The $processName process is not running. Attempting to start it..."
 
-    $exePath = "C:\Program Files (x86)\ADOT_Scan\scanapp.exe"
+    # Define the task action to run scanapp.exe
+    $taskAction = New-ScheduledTaskAction -Execute "$scanAppExePath"
 
-    if (Test-Path -Path $exePath) {
-        Start-Process -FilePath $exePath -NoNewWindow
-        Write-Host "Started the $processName process."
-    } else {
-        Write-Host "The file $exePath does not exist, unable to start $processName."
-    }
+    # Register the scheduled task to run as the currently logged-in user
+    $taskTrigger = New-ScheduledTaskTrigger -AtStartup
+    $taskUser = $currentUser
+
+    Register-ScheduledTask -TaskName "StartScanAppTask" -Action $taskAction -Trigger $taskTrigger -User $taskUser
+
+    # Start the scheduled task
+    Start-ScheduledTask -TaskName "StartScanAppTask"
+
+    Write-Host "The $processName process is now starting for the current user."
+
+    # Sleep for a while to give time for the task to run (you can adjust this time)
+    Start-Sleep -Seconds 10
+
+    # Unregister the scheduled task
+    Unregister-ScheduledTask -TaskName "StartScanAppTask" -Confirm:$false
+
+    Write-Host "The scheduled task has been deleted."
 }
-
-
-
-
