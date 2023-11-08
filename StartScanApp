@@ -1,0 +1,28 @@
+# Get the current logged-in user using WMI
+$LoggedUser = Get-WmiObject -Class Win32_ComputerSystem | Select-Object -ExpandProperty UserName
+
+# Check if the username is in the DOMAIN\Username format
+if ($LoggedUser -match '^(?<Domain>[\w\d]+)\\(?<Username>.+)$') {
+    $Domain = $Matches['Domain']
+    $Username = $Matches['Username']
+} else {
+    $Domain = $null
+    $Username = $LoggedUser
+}
+
+# Define the path to the scanapp.exe
+$ProgramPath = "C:\Program Files (x86)\ADOT_Scan\scanapp.exe"
+
+# Check if the program file exists
+if (Test-Path $ProgramPath -PathType Leaf) {
+    # Start the program with the current user's credentials
+    if ($Domain -eq $null) {
+        # Local user
+        Start-Process $ProgramPath
+    } else {
+        # Domain user
+        Start-Process -Credential "$Domain\$Username" -FilePath $ProgramPath
+    }
+} else {
+    Write-Host "The program file does not exist at $ProgramPath."
+}
