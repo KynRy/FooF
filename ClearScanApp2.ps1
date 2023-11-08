@@ -25,6 +25,7 @@ if ($currentUser) {
         Remove-Item -Path $folderToDelete -Recurse -Force -Verbose
     } else {
         Write-Host "The folder $folderToDelete does not exist for the current user."
+    }
 } else {
     Write-Host "Unable to determine the current user."
 }
@@ -57,4 +58,3 @@ if (Test-Path $ProgramPath -PathType Leaf) {
 } else {
     Write-Host "The program file does not exist at $ProgramPath."
 }
-
