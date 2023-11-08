@@ -25,12 +25,13 @@ if ($currentUser) {
         Remove-Item -Path $folderToDelete -Recurse -Force -Verbose
     } else {
         Write-Host "The folder $folderToDelete does not exist for the current user."
+    }
 } else {
     Write-Host "Unable to determine the current user."
 }
 
 # Define the path to the scanapp.exe executable
-$scanAppExePath = "C:\Program Files (x86)\ADOT_Scan\scanapp.exe"
+$scanAppExePath = "C:\Path\to\scanapp.exe"
 
 # Check if "scanapp.exe" process is running
 $processName = "scanapp.exe"
