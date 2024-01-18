@@ -1,0 +1,24 @@
+# PowerShell Script to Delete a Domain User Profile
+
+# Replace 'DOMAIN\Username' with the actual domain and username
+$userProfile = "DOMAIN\Username"
+
+try {
+    # Get the SID of the user
+    $objUser = New-Object System.Security.Principal.NTAccount($userProfile)
+    $strSID = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
+    
+    # Get the profile list path in the registry
+    $profileListPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList"
+
+    # Check if the user profile exists
+    if (Test-Path -Path "$profileListPath\$strSID") {
+        # Remove the user profile
+        Remove-Item -Path "$profileListPath\$strSID" -Recurse
+        Write-Host "User profile for $userProfile deleted successfully."
+    } else {
+        Write-Host "User profile for $userProfile not found."
+    }
+} catch {
+    Write-Host "Error: $_"
+}
