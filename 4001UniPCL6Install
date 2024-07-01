@@ -1,18 +1,37 @@
 # Define the base URL
 $baseUrl = "https://ftp.hp.com/pub/softlib/software13/printers/UPD/"
 
-# Get the HTML content of the base URL
-$htmlContent = Invoke-WebRequest -Uri $baseUrl
+# Function to get the latest driver URL
+function Get-LatestDriverUrl {
+    param (
+        [string]$baseUrl
+    )
+    try {
+        # Get the HTML content of the base URL
+        $htmlContent = Invoke-WebRequest -Uri $baseUrl
 
-# Parse the content to find the latest version
-$latestVersionUrl = $htmlContent.Links | Where-Object { $_.href -match "upd-pcl6-x64-.*\.exe" } | Sort-Object href -Descending | Select-Object -First 1 -ExpandProperty href
-if (-not $latestVersionUrl) {
-    Write-Warning "No driver executable found."
+        # Parse the content to find the latest version
+        $latestVersionUrl = $htmlContent.Links | Where-Object { $_.href -match "upd-pcl6-x64-.*\.exe" } | Sort-Object href -Descending | Select-Object -First 1 -ExpandProperty href
+        if ($latestVersionUrl) {
+            return "$baseUrl$latestVersionUrl"
+        } else {
+            Write-Warning "No driver executable found."
+            return $null
+        }
+    } catch {
+        Write-Error "Failed to retrieve the latest driver URL. Error: $_"
+        return $null
+    }
+}
+
+# Get the latest driver URL
+$driverUrl = Get-LatestDriverUrl -baseUrl $baseUrl
+
+if (-not $driverUrl) {
     exit
 }
 
-# Combine the base URL with the latest version URL
-$driverUrl = "$baseUrl$latestVersionUrl"
+# Define paths
 $downloadPath = "$env:TEMP\upd-pcl6-x64.exe"
 $targetDirectory = "C:\drivers\printer\UniPCL6"
 $zipFilePath = "$env:TEMP\upd-pcl6-x64.zip"
@@ -25,42 +44,3 @@ Invoke-WebRequest -Uri $driverUrl -OutFile $downloadPath
 if (-not (Test-Path -Path $downloadPath)) {
     Write-Warning "The driver executable was not downloaded successfully."
     exit
-}
-
-# Rename and extract the executable
-Move-Item -Path $downloadPath -Destination $zipFilePath -Force
-
-# Ensure target directory exists
-if (-not (Test-Path -Path $targetDirectory -PathType Container)) {
-    New-Item -ItemType Directory -Path $targetDirectory -Force
-}
-
-# Extract the driver files
-Write-Host "Extracting driver files to $targetDirectory"
-Expand-Archive -Path $zipFilePath -DestinationPath $targetDirectory -Force
-Write-Host "Extraction completed successfully."
-
-# Install the drivers
-$driverFiles = Get-ChildItem -Path $targetDirectory -Filter "*.inf" -Recurse
-if ($driverFiles.Count -eq 0) {
-    Write-Warning "No driver files found in the target directory."
-    exit
-}
-
-$successfulInstallCount = 0
-foreach ($driverFile in $driverFiles) {
-    Write-Host "Installing driver: $($driverFile.FullName)"
-    try {
-        $result = Start-Process -FilePath "pnputil" -ArgumentList "/add-driver `"$($driverFile.FullName)`" /install" -NoNewWindow -Wait -PassThru
-        if ($result.ExitCode -eq 0) {
-            Write-Host "Driver installed successfully: $($driverFile.FullName)"
-            $successfulInstallCount++
-        } else {
-            Write-Error "Failed to install driver: $($driverFile.FullName)"
-        }
-    } catch {
-        Write-Error "An error occurred while installing driver: $($driverFile.FullName). Error: $_"
-    }
-}
-
-Write-Host "Installation completed. $successfulInstallCount out of $($driverFiles.Count) drivers installed successfully."
