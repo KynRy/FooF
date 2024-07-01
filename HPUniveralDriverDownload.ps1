@@ -8,6 +8,7 @@ $downloadPath = "$env:TEMP\upd-pcl6-x64.exe"
 $targetDirectory = "C:\drivers\printer\UniPCL6"
 
 # Download the driver executable
+Write-Host "Downloading driver from $driverUrl"
 Invoke-WebRequest -Uri $driverUrl -OutFile $downloadPath
 
 # Check if the file exists after download
@@ -27,7 +28,35 @@ if (-not (Test-Path -Path $targetDirectory -PathType Container)) {
 }
 
 # Use Expand-Archive to extract the contents to the specified directory
+Write-Host "Extracting driver files to $targetDirectory"
 Expand-Archive -Path $zipFilePath -DestinationPath $targetDirectory -Force
 
 Write-Host "Extraction completed successfully to $targetDirectory."
 
+# Check the target directory for drivers and install them
+$driverFiles = Get-ChildItem -Path $targetDirectory -Filter "*.inf" -Recurse
+
+if ($driverFiles.Count -eq 0) {
+    Write-Warning "No driver files found in the target directory."
+    exit
+}
+
+# Initialize a counter for successfully installed drivers
+$successfulInstallCount = 0
+
+foreach ($driverFile in $driverFiles) {
+    Write-Host "Installing driver: $($driverFile.FullName)"
+    try {
+        $result = Start-Process -FilePath "pnputil" -ArgumentList "/add-driver `"$($driverFile.FullName)`" /install" -NoNewWindow -Wait -PassThru
+        if ($result.ExitCode -eq 0) {
+            Write-Host "Driver installed successfully: $($driverFile.FullName)"
+            $successfulInstallCount++
+        } else {
+            Write-Error "Failed to install driver: $($driverFile.FullName)"
+        }
+    } catch {
+        Write-Error "An error occurred while installing driver: $($driverFile.FullName). Error: $_"
+    }
+}
+
+Write-Host "Installation completed. $successfulInstallCount out of $($driverFiles.Count) drivers installed successfully."
